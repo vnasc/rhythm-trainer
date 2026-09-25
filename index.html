@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rhythm Trainer</title>
+<style>
+:root{color-scheme:dark;--bg:#101319;--panel:#191e27;--panel2:#202733;--border:#303a49;--text:#e7edf5;--muted:#9ba9bb;--accent:#65c7ff;--green:#31c46c;--red:#ff626d;--blue:#65a8ff;--yellow:#ffd75a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}h1{font-size:22px;margin:0}header p{margin:3px 0 0;color:var(--muted)}main{max-width:1500px;margin:auto;padding:18px;display:grid;gap:16px}.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px}.transport{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.transport select{min-width:240px;max-width:440px}button,select,input{font:inherit;color:var(--text)}button{background:#2b3746;border:1px solid #46566b;border-radius:8px;padding:9px 14px;cursor:pointer}button:hover{filter:brightness(1.15)}button:disabled{opacity:.45;cursor:not-allowed}.primary{background:#176b9a;border-color:#218ec7}.danger{background:#6d3038;border-color:#a74b56}.status{color:var(--muted);margin-left:auto}.status strong{color:var(--accent)}.led{display:inline-block;width:9px;height:9px;border-radius:50%;background:#636d7b;margin-right:7px}.led.on{background:var(--green);box-shadow:0 0 9px #31c46c88}
+.layout{display:grid;grid-template-columns:minmax(300px,340px) minmax(0,1fr);gap:16px}.controls h2,.visuals h2{font-size:16px;margin:0 0 12px}.group{border-top:1px solid var(--border);padding-top:12px;margin-top:12px}.group:first-of-type{border-top:0;padding-top:0;margin-top:0}.group h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 9px}.control{display:grid;grid-template-columns:1fr 100px;gap:8px;align-items:center;margin:8px 0}.control label{color:#d4dce7}.control output{color:var(--accent);text-align:right;font-variant-numeric:tabular-nums}.control input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--accent);margin:0}.control input[type=number]{width:100%;background:#11161d;border:1px solid var(--border);border-radius:6px;padding:6px}.checkrow{display:flex;gap:14px;flex-wrap:wrap;margin:9px 0;color:#d4dce7}.checkrow label{display:flex;align-items:center;gap:7px}.checkrow input{accent-color:var(--accent)}.hint{font-size:12px;color:var(--muted)}.visuals{display:grid;gap:14px;align-content:start}.stats{display:grid;grid-template-columns:repeat(5,minmax(90px,1fr));gap:9px}.stat{background:var(--panel2);border-radius:8px;padding:10px}.stat span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}.stat strong{font-size:18px;font-variant-numeric:tabular-nums}.canvasbox{background:#11161d;border:1px solid var(--border);border-radius:8px;overflow:hidden}.canvas-title{padding:8px 10px;color:var(--muted);font-size:12px;border-bottom:1px solid var(--border)}canvas{display:block;width:100%;height:230px}.short canvas{height:130px}.graphs{display:grid;grid-template-columns:1fr 1fr;gap:14px}.graphs canvas{height:160px}.attack-chart canvas{height:180px}.attack-advice{padding:8px 10px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}.attack-advice[data-state="good"]{color:#86e6ac}.attack-advice[data-state="warn"]{color:#ffd75a}.attack-advice[data-state="bad"]{color:#ff9b9b}.foot{color:var(--muted);font-size:12px}.bad{color:#ff9b9b}.good{color:#86e6ac}.deviceLine{display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%}#device{flex:1}.meter{height:8px;border-radius:5px;background:#0c1015;overflow:hidden;min-width:100px;flex:1}.meter>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#31c46c,#ffd75a,#ff626d)}.actionrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.section-heading{display:flex;justify-content:space-between;align-items:center;gap:10px}.toggle{accent-color:var(--green)}.grid-title{display:flex;align-items:center;justify-content:space-between;gap:10px}.fullscreen-btn{padding:5px;line-height:1}.fullscreen-btn svg{display:block;width:16px;height:16px}.fullscreen-btn .exit-icon{display:none}.fullscreen-btn.is-fullscreen .enter-icon{display:none}.fullscreen-btn.is-fullscreen .exit-icon{display:block}.canvasbox:fullscreen{width:100vw;height:100vh;display:flex;flex-direction:column;border:0;border-radius:0;background:#11161d}.canvasbox:fullscreen .canvas-title{flex:none}.canvasbox:fullscreen canvas{flex:1;min-height:0;height:auto}@media(max-width:920px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,1fr)}}@media(max-width:560px){main{padding:10px}.panel{padding:12px}.graphs{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}header{padding:14px}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Rhythm Trainer</h1></div>
+  <div class="actionrow"><span class="led" id="statusLed"></span><span class="status" id="statusText">Audio disconnected</span></div>
+</header>
+<main>
+  <section class="panel transport">
+    <button class="primary" id="connectBtn">Connect audio</button>
+    <select id="deviceSelect" aria-label="Audio input device"><option value="">Default audio input</option></select>
+    <button class="primary" id="playBtn" disabled>▶ Play</button>
+    <button class="danger" id="stopBtn" disabled>■ Stop</button>
+    <span class="status" id="audioInfo">Choose your interface input; use headphones to avoid feedback.</span>
+  </section>
+  <div class="layout">
+    <section class="panel controls">
+      <div class="group">
+        <h3>Rhythm grid</h3>
+        <div class="control"><label for="tempo">Tempo</label><input id="tempo" type="number" min="30" max="300" step="1" value="60"></div>
+        <div class="control"><label for="beats">Beats per cycle</label><input id="beats" type="number" min="1" max="16" step="1" value="4"></div>
+        <div class="control"><label for="divisions">Divisions per cycle</label><input id="divisions" type="number" min="1" max="32" step="1" value="16"></div>
+        <div class="control"><label for="swing">Swing</label><output id="swingOut">0%</output><input id="swing" type="range" min="-0.9" max="0.9" step="0.01" value="0"></div>
+        <div class="control"><label for="phase">Phase offset</label><output id="phaseOut">0°</output><input id="phase" type="range" min="-360" max="360" step="1" value="0"></div>
+        <div class="control"><label for="error">Error bound</label><output id="errorOut">60 ms</output><input id="error" type="range" min="1" max="250" step="1" value="60"></div>
+        <div class="control"><label for="latency">Latency compensation</label><output id="latencyOut">0 ms</output><input id="latency" type="range" min="-200" max="200" step="1" value="0"></div>
+        <div class="checkrow"><label><input id="autoShrink" type="checkbox"> Auto-shrink error bound as hit rate improves</label></div>
+      </div>
+      <div class="group">
+        <h3>Audio onset detector</h3>
+        <div class="control"><label for="hpf">Low-frequency cutoff</label><output id="hpfOut">300 Hz</output><input id="hpf" type="range" min="30" max="2000" step="10" value="300"></div>
+        <div class="control"><label for="sensitivity">Attack threshold</label><output id="sensitivityOut">2.0×</output><input id="sensitivity" type="range" min="1.1" max="12" step="0.1" value="2.0"></div>
+        <div class="control"><label for="floor">Minimum attack level</label><output id="floorOut">-68.0 dBFS</output><input id="floor" type="range" min="-100" max="-40" step="0.5" value="-68"></div>
+        <div class="control"><label for="refractory">Retrigger delay</label><output id="refractoryOut">120 ms</output><input id="refractory" type="range" min="10" max="200" step="1" value="120"></div>
+        <div class="control"><label for="adaptive">Background tracking time</label><output id="adaptiveOut">200 ms</output><input id="adaptive" type="range" min="50" max="600" step="10" value="200"></div>
+      </div>
+      <div class="group">
+        <h3>Metronome & monitoring</h3>
+        <div class="checkrow">
+          <label><input id="metronomeOn" type="checkbox" checked> Metronome on</label>
+          <label><input id="hitClickOn" type="checkbox"> Hit click on</label>
+          <label><input id="monitorOn" type="checkbox"> Monitor input through browser</label>
+        </div>
+        <div class="control"><label for="clickPitch">Hit click pitch</label><output id="clickPitchOut">1000 Hz</output><input id="clickPitch" type="range" min="200" max="2000" step="10" value="1000"></div>
+        <div class="control"><label for="clickVolume">Hit click volume</label><output id="clickVolumeOut">50%</output><input id="clickVolume" type="range" min="0" max="100" step="1" value="50"></div>
+      </div>
+      <div class="group">
+        <div class="actionrow"><button id="clearBtn">Clear session</button></div>
+      </div>
+    </section>
+    <section class="visuals">
+      <div class="panel stats">
+        <div class="stat"><span>Hit rate</span><strong id="hitRate">—</strong></div>
+        <div class="stat"><span>Onsets</span><strong id="onsetCount">0</strong></div>
+        <div class="stat"><span>On time</span><strong id="onTimeCount">0</strong></div>
+        <div class="stat"><span>Early / late</span><strong id="earlyLateCount">0 / 0</strong></div>
+        <div class="stat"><span>Audio latency</span><strong id="latencyInfo">—</strong></div>
+      </div>
+      <div class="canvasbox"><div class="canvas-title grid-title"><span>Rhythm grid · click a line to toggle its target</span><button class="fullscreen-btn" id="gridFullscreenBtn" type="button" aria-label="Show rhythm grid fullscreen" title="Fullscreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path class="enter-icon" d="M3 9V3h6M15 3h6v6M21 15v6h-6M9 21H3v-6"/><path class="exit-icon" d="M9 3v6H3M21 9h-6V3M15 21v-6h6M3 15h6v6"/></svg></button></div><canvas id="gridCanvas" height="230"></canvas></div>
+      <div class="graphs">
+        <div class="canvasbox"><div class="canvas-title">Timing error distribution (ms)</div><canvas id="histCanvas" height="160"></canvas></div>
+        <div class="canvasbox"><div class="canvas-title">10-minute hit-rate history</div><canvas id="trainCanvas" height="160"></canvas></div>
+      </div>
+      <div class="canvasbox attack-chart"><div class="canvas-title">Input meter</div><canvas id="attackCanvas" height="180"></canvas><div class="attack-advice" id="attackAdvice" role="status" data-state="neutral">Waiting for detected attacks…</div></div>
+    </section>
+  </div>
+</main>
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const SETTINGS_KEY = 'bassRhythmTrainer.settings.v1';
+const defaults = {tempo:60,beats:4,divisions:16,swing:0,phase:0,error:60,latency:0,autoShrink:false,hpf:300,sensitivity:2.0,floor:0.00039810717055349735,refractory:120,adaptive:200,clickPitch:1000,clickVolume:50,metronomeOn:true,hitClickOn:false,monitorOn:false};
+let settings = {...defaults};
+try { settings = {...defaults,...JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}')}; } catch(_) {}
+let audioContext=null,stream=null,source=null,worklet=null,monitorGain=null,connected=false,playing=false;
+let transportStart=0, scheduleTimer=null, scheduleCycle=0, scheduleIndex=0, nextTargets=[];
+let eventHistory=[], rawOnsets=0, onTime=0,early=0,late=0;
+let trainingSamples=[],lastTrainingTime=0, gridMask=[];
+let effectiveErrorBound=Number(settings.error)||defaults.error,lastShrinkOnTime=0;
+let animationFrameId=0,attackAdviceLastUpdate=0;
+const gridCanvas=$('gridCanvas'), histCanvas=$('histCanvas'), trainCanvas=$('trainCanvas'), attackCanvas=$('attackCanvas');
+const floorToDbfs=value=>Math.max(-100,Math.min(-40,20*Math.log10(Math.max(Number(value)||0,1e-5))));
+const floorFromDbfs=value=>Math.pow(10,Number(value)/20);
+
+function loadSettings(){
+ effectiveErrorBound=Number(settings.error)||defaults.error;
+ for(const key of Object.keys(defaults)){
+  const el=$(key); if(!el) continue;
+  if(el.type==='checkbox') el.checked=!!settings[key]; else if(key==='floor') el.value=floorToDbfs(settings[key]); else el.value=settings[key];
+ }
+ gridMask=Array.from({length:32},(_,i)=>settings.mask ? !!settings.mask[i] : true);
+ refreshOutputs(); applyWorkletSettings(); drawAll();
+}
+function saveSettings(){
+ for(const key of Object.keys(defaults)){
+  const el=$(key); settings[key]=el.type==='checkbox'?el.checked:(key==='floor'?floorFromDbfs(el.value):Number(el.value));
+ }
+ settings.mask=gridMask;
+ try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));}catch(_){}
+}
+function refreshOutputs(){
+ $('swingOut').textContent=Math.round(Number($('swing').value)*100)+'%';
+ $('phaseOut').textContent=$('phase').value+'°';
+ $('errorOut').textContent=(Math.round(effectiveErrorBound*10)/10)+' ms';
+ $('latencyOut').textContent=$('latency').value+' ms';
+ $('hpfOut').textContent=$('hpf').value+' Hz';
+ $('sensitivityOut').textContent=Number($('sensitivity').value).toFixed(1)+'×';
+ $('floorOut').textContent=Number($('floor').value).toFixed(1)+' dBFS';
+ $('refractoryOut').textContent=$('refractory').value+' ms';
+ $('adaptiveOut').textContent=$('adaptive').value+' ms';
+ $('clickPitchOut').textContent=$('clickPitch').value+' Hz';
+ $('clickVolumeOut').textContent=$('clickVolume').value+'%';
+}
+function readSettings(){
+ for(const key of Object.keys(defaults)){
+  const el=$(key); settings[key]=el.type==='checkbox'?el.checked:(key==='floor'?floorFromDbfs(el.value):Number(el.value));
+ }
+ settings.mask=gridMask;
+}
+function workletSettings(){
+ return {hpf:settings.hpf,sensitivity:settings.sensitivity,floor:settings.floor,refractory:settings.refractory,adaptive:settings.adaptive,monitor:settings.monitorOn};
+}
+function applyWorkletSettings(){if(worklet) worklet.port.postMessage({type:'settings',settings:workletSettings()});}
+function setStatus(text,on=false){$('statusText').textContent=text;$('statusLed').classList.toggle('on',on);}
+function resizeCanvas(c){const dpr=window.devicePixelRatio||1;const w=Math.max(300,c.clientWidth);const h=parseFloat(getComputedStyle(c).height);if(c.width!==Math.round(w*dpr)||c.height!==Math.round(h*dpr)){c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);}const x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);return {ctx:x,w,h};}
+function gridTargets(){
+ const b=Math.max(1,Number(settings.beats)||4),n=Math.max(1,Number(settings.divisions)||16),step=b/n;
+ const phase=(Number(settings.phase)||0)/360*b;
+ const out=[];
+ for(let i=0;i<n;i++){
+  let p=i*step+(i%2?Number(settings.swing)*step*0.5:0)+phase;
+  p=((p%b)+b)%b;
+  out.push({index:i,beat:p,enabled:gridMask[i]!==false});
+ }
+ out.sort((a,b)=>a.beat-b.beat); return out;
+}
+function signedCycleDelta(a,b,cycle){let d=a-b;while(d>cycle/2)d-=cycle;while(d< -cycle/2)d+=cycle;return d;}
+function assessBeat(beat){
+ const b=Math.max(1,Number(settings.beats)||4),p=((beat%b)+b)%b;let best=null;
+ for(const g of gridTargets())if(g.enabled){const d=signedCycleDelta(p,g.beat,b);if(!best||Math.abs(d)<Math.abs(best.delta))best={delta:d,target:g};}
+ if(!best)return {result:null,deltaMs:NaN,target:null};
+ const deltaMs=best.delta*60000/Number(settings.tempo);
+ return {result:Math.abs(deltaMs)<=effectiveErrorBound?0:(deltaMs<0?-1:1),deltaMs,target:best.target};
+}
+function scheduleTone(time,freq,volume,duration=.035){
+ if(!audioContext)return;
+ const now=audioContext.currentTime,t=Math.max(time,now+.003),osc=audioContext.createOscillator(),gain=audioContext.createGain();
+ osc.type='sine';osc.frequency.setValueAtTime(freq,t);gain.gain.setValueAtTime(Math.max(.0001,volume),t);gain.gain.exponentialRampToValueAtTime(.0001,t+duration);
+ osc.connect(gain);gain.connect(audioContext.destination);osc.start(t);osc.stop(t+duration+.005);
+}
+function scheduleMetronome(){
+ if(!playing||!audioContext)return;
+ const targets=gridTargets().filter(x=>x.enabled);if(!targets.length)return;
+ const now=audioContext.currentTime,horizon=now+.12,b=Math.max(1,Number(settings.beats)),tempo=Number(settings.tempo);
+ let guard=0;
+ while(guard++<100){
+  const pos=targets[scheduleIndex];const absBeat=scheduleCycle*b+pos.beat;const time=transportStart+absBeat*60/tempo;
+  if(time<now-.02){advanceSchedule(targets);continue;}
+  if(time>horizon)break;
+  const nearestBeat=Math.round(pos.beat);
+  const accent=Math.abs(pos.beat-nearestBeat)<.015;
+  if(settings.metronomeOn)scheduleTone(time,accent?1050:780,accent?.13:.09,.025);
+  advanceSchedule(targets);
+ }
+}
+function advanceSchedule(targets){scheduleIndex++;if(scheduleIndex>=targets.length){scheduleIndex=0;scheduleCycle++;}}
+function startTransport(){
+ if(!audioContext||!connected)return;
+ if(playing)stopTransport();
+ playing=true;transportStart=audioContext.currentTime+.08;scheduleCycle=0;scheduleIndex=0;
+ $('playBtn').disabled=true;$('stopBtn').disabled=false;
+ ['tempo','beats','divisions','swing','phase'].forEach(id=>$(id).disabled=true);
+ scheduleTimer=setInterval(scheduleMetronome,20);scheduleMetronome();
+ lastTrainingTime=performance.now();setStatus('Playing',true);drawAll();
+}
+function stopTransport(){
+ if(!playing)return;playing=false;if(scheduleTimer){clearInterval(scheduleTimer);scheduleTimer=null;}
+ $('playBtn').disabled=!connected;$('stopBtn').disabled=true;
+ ['tempo','beats','divisions','swing','phase'].forEach(id=>$(id).disabled=false);
+ setStatus(connected?'Audio connected':'Audio disconnected',connected);drawAll();
+}
+function handleOnset(m){
+ rawOnsets++;
+ const eventTime=m.time;
+ let result=null,deltaMs=NaN,beat=NaN,target=null;
+ if(playing){
+  const adjusted=eventTime-transportStart+Number(settings.latency)/1000;
+  beat=adjusted*Number(settings.tempo)/60;
+  const scored=assessBeat(beat);result=scored.result;deltaMs=scored.deltaMs;target=scored.target;
+  if(result===0){onTime++;if(settings.hitClickOn)scheduleTone(audioContext.currentTime+.004,Number(settings.clickPitch),Number(settings.clickVolume)/100*.3,.03);}
+  else if(result===-1)early++;else if(result===1)late++;
+  const counted=onTime+early+late;
+  if(settings.autoShrink&&counted&&onTime/counted>.9&&onTime>=lastShrinkOnTime+5){
+    lastShrinkOnTime=onTime;
+    effectiveErrorBound=Math.max(1,effectiveErrorBound-1);
+    settings.error=effectiveErrorBound;
+    $('error').value=String(effectiveErrorBound);
+    saveSettings();refreshOutputs();
+  }
+ }
+ const rec={time:eventTime,beat,result,deltaMs,inputEnv:m.inputEnv,fast:m.fast,slow:m.slow,ratio:m.ratio,hpfHz:settings.hpf,sensitivity:settings.sensitivity,floor:settings.floor,refractory:settings.refractory,adaptive:settings.adaptive,error:effectiveErrorBound,latency:settings.latency,autoShrink:settings.autoShrink,beats:settings.beats,divisions:settings.divisions,swing:settings.swing,phase:settings.phase,metronomeOn:settings.metronomeOn,hitClickOn:settings.hitClickOn,clickPitch:settings.clickPitch,clickVolume:settings.clickVolume};
+ eventHistory.push(rec);if(eventHistory.length>5000)eventHistory.shift();
+ if(playing){
+ }
+ updateStats();drawAll();
+}
+function updateStats(){
+ $('onsetCount').textContent=rawOnsets;
+ $('onTimeCount').textContent=onTime;
+ $('earlyLateCount').textContent=early+' / '+late;
+ const counted=onTime+early+late;$('hitRate').textContent=counted?Math.round(100*onTime/counted)+'%':'—';
+}
+function drawGrid(){
+ const {ctx,w,h}=resizeCanvas(gridCanvas),b=Math.max(1,Number(settings.beats)),targets=gridTargets();
+ ctx.clearRect(0,0,w,h);ctx.fillStyle='#11161d';ctx.fillRect(0,0,w,h);
+ const left=48,right=16,top=28,bottom=24,pw=w-left-right,ph=h-top-bottom;
+ for(let beat=0;beat<b;beat++){ctx.fillStyle=beat%2?'#141a22':'#171e28';ctx.fillRect(left+beat/b*pw,top,pw/b,ph);ctx.fillStyle='#65758a';ctx.font='11px system-ui';ctx.fillText(String(beat+1),left+beat/b*pw+4,top-9);}
+ const errBeat=effectiveErrorBound*Number(settings.tempo)/60000;
+ for(const g of targets){const x=left+g.beat/b*pw,r=errBeat/b*pw;if(g.enabled){ctx.fillStyle='rgba(49,196,108,.18)';ctx.fillRect(x-r,top,r*2,ph);}ctx.strokeStyle=g.enabled?'#9aa8b8':'#596473';ctx.lineWidth=g.enabled?1.4:1;ctx.setLineDash(g.enabled?[]:[4,4]);ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,top+ph);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=g.enabled?'#edf3fb':'#778393';ctx.font='11px system-ui';ctx.textAlign='center';ctx.fillText(String(g.index+1),x,top+ph+15);}
+ const seam=targets.find(g=>Math.abs(g.beat)<1e-9);
+ if(seam){const x=left+pw,r=errBeat/b*pw;if(seam.enabled){ctx.fillStyle='rgba(49,196,108,.18)';ctx.fillRect(x-r,top,r*2,ph);}ctx.strokeStyle=seam.enabled?'#9aa8b8':'#596473';ctx.lineWidth=seam.enabled?1.4:1;ctx.setLineDash(seam.enabled?[]:[4,4]);ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,top+ph);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=seam.enabled?'#edf3fb':'#778393';ctx.font='11px system-ui';ctx.textAlign='center';ctx.fillText(String(seam.index+1),x,top+ph+15);}
+ ctx.textAlign='left';
+ if(playing&&audioContext){let beat=(audioContext.currentTime-transportStart)*Number(settings.tempo)/60,phase=((beat%b)+b)%b,x=left+phase/b*pw;ctx.strokeStyle='#ffd75a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,top+ph);ctx.stroke();}
+ const now=audioContext?audioContext.currentTime:0;
+ for(const e of eventHistory){if(!Number.isFinite(e.beat))continue;let age=now-e.time;if(age<0||age>6)continue;const phase=((e.beat%b)+b)%b,x=left+phase/b*pw,y=top+Math.min(1,age/6)*ph;ctx.fillStyle=e.result===0?'#31c46c':e.result===-1?'#65a8ff':e.result===1?'#ff626d':'#c5cfdb';ctx.globalAlpha=Math.max(.15,1-age/6);ctx.beginPath();ctx.arc(x,y,4.2,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
+}
+function drawHistogram(){
+ const {ctx,w,h}=resizeCanvas(histCanvas);ctx.clearRect(0,0,w,h);ctx.fillStyle='#11161d';ctx.fillRect(0,0,w,h);const l=32,r=12,t=12,b=24,pw=w-l-r,ph=h-t-b;ctx.strokeStyle='#34404f';ctx.beginPath();ctx.moveTo(l,t);ctx.lineTo(l,t+ph);ctx.lineTo(l+pw,t+ph);ctx.stroke();
+ const bins=41,counts=Array(bins).fill(0),range=200;for(const e of eventHistory)if(Number.isFinite(e.deltaMs)&&Math.abs(e.deltaMs)<=range){let i=Math.min(bins-1,Math.floor((e.deltaMs+range)/(2*range)*bins));counts[i]++;}const max=Math.max(1,...counts);
+ for(let i=0;i<bins;i++){const bw=pw/bins-1,bar=counts[i]/max*(ph-4),x=l+i*pw/bins;ctx.fillStyle=i===20?'#31c46c':'#5e9fc8';ctx.fillRect(x,t+ph-bar,bw,bar);}
+ const zero=l+pw/2;ctx.strokeStyle='#e9eff7';ctx.beginPath();ctx.moveTo(zero,t);ctx.lineTo(zero,t+ph);ctx.stroke();ctx.fillStyle='#95a3b4';ctx.font='10px system-ui';ctx.fillText('-200',l,t+ph+15);ctx.fillText('0',zero-4,t+ph+15);ctx.fillText('+200 ms',l+pw-42,t+ph+15);
+}
+function drawTraining(){
+ const {ctx,w,h}=resizeCanvas(trainCanvas);ctx.clearRect(0,0,w,h);ctx.fillStyle='#11161d';ctx.fillRect(0,0,w,h);const l=30,r=10,t=12,b=20,pw=w-l-r,ph=h-t-b;ctx.strokeStyle='#34404f';ctx.beginPath();ctx.moveTo(l,t);ctx.lineTo(l,t+ph);ctx.lineTo(l+pw,t+ph);ctx.stroke();ctx.fillStyle='#8c9aad';ctx.font='10px system-ui';ctx.fillText('100%',2,t+4);ctx.fillText('0%',10,t+ph);if(trainingSamples.length<2)return;const now=performance.now();ctx.strokeStyle='#ffd75a';ctx.lineWidth=1.5;ctx.beginPath();trainingSamples.forEach((p,i)=>{let x=l+pw*(1-(now-p.t)/600000),y=t+ph*(1-p.rate);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
+}
+function drawAttackChart(){
+ const showAdvice=(text,state='neutral')=>{const el=$('attackAdvice'),now=performance.now();if(el.textContent===text&&el.dataset.state===state)return;if(attackAdviceLastUpdate&&now-attackAdviceLastUpdate<8000)return;el.textContent=text;el.dataset.state=state;attackAdviceLastUpdate=now;};
+ const {ctx,w,h}=resizeCanvas(attackCanvas);ctx.clearRect(0,0,w,h);ctx.fillStyle='#11161d';ctx.fillRect(0,0,w,h);
+ const l=48,r=14,t=18,b=28,pw=w-l-r,ph=h-t-b,windowSeconds=10;
+ const latest=eventHistory.length?eventHistory[eventHistory.length-1].time:0,now=audioContext?audioContext.currentTime:latest;
+ const attacks=eventHistory.filter(e=>Number.isFinite(e.fast)&&Number.isFinite(e.slow)&&e.time>=now-windowSeconds&&e.time<=now);
+ const dbFor=value=>Math.max(-100,Math.min(0,20*Math.log10(Math.max(value,1e-6))));
+ const thresholdFor=e=>Number.isFinite(e.peakThreshold)?e.peakThreshold:Math.max(Number(e.floor)||0,(Number(e.slow)||0)*(Number(e.sensitivity)||1));
+ const levelFor=e=>Number.isFinite(e.peakFast)?e.peakFast:e.fast;
+ let minDb=-90,maxDb=0;
+ if(attacks.length){const levels=attacks.flatMap(e=>[dbFor(levelFor(e)),dbFor(thresholdFor(e))]),low=Math.min(...levels),high=Math.max(...levels),padding=Math.max(4,(high-low)*.15);minDb=Math.max(-100,Math.floor((low-padding)/10)*10);maxDb=Math.min(0,Math.ceil((high+padding)/10)*10);if(maxDb-minDb<20){const center=(low+high)/2;minDb=Math.max(-100,Math.floor((center-10)/10)*10);maxDb=Math.min(0,minDb+20);if(maxDb-minDb<20)minDb=maxDb-20;}}
+ const yFor=value=>{const db=Math.max(minDb,Math.min(maxDb,dbFor(value)));return t+ph*(1-(db-minDb)/(maxDb-minDb));};
+ const xFor=time=>l+(time-(now-windowSeconds))/windowSeconds*pw;
+ ctx.font='10px system-ui';ctx.textAlign='right';ctx.textBaseline='middle';
+ for(let db=maxDb;db>=minDb;db-=10){const y=yFor(Math.pow(10,db/20));ctx.strokeStyle='#34404f';ctx.beginPath();ctx.moveTo(l,y);ctx.lineTo(l+pw,y);ctx.stroke();ctx.fillStyle='#8c9aad';ctx.fillText(String(db),l-6,y);}
+ for(const seconds of [10,7,5,2,0]){const x=l+pw*(1-seconds/windowSeconds);ctx.strokeStyle='#27313d';ctx.beginPath();ctx.moveTo(x,t);ctx.lineTo(x,t+ph);ctx.stroke();ctx.fillStyle='#8c9aad';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(seconds?'−'+seconds+'s':'now',x,t+ph+5);}
+ if(attacks.length){
+  ctx.strokeStyle='#ffd75a';ctx.lineWidth=1.5;ctx.beginPath();attacks.forEach((e,i)=>{const threshold=thresholdFor(e);const x=xFor(e.time),y=yFor(threshold);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
+  for(const e of attacks){const x=xFor(e.time),attackY=yFor(levelFor(e)),thresholdY=yFor(thresholdFor(e));ctx.strokeStyle='rgba(101,199,255,.5)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,thresholdY);ctx.lineTo(x,attackY);ctx.stroke();ctx.fillStyle='#65c7ff';ctx.beginPath();ctx.arc(x,attackY,3.5,0,Math.PI*2);ctx.fill();}
+  const recent=attacks.filter(e=>Number.isFinite(e.peakMargin)).slice(-10),lastTen=attacks.slice(-10).map(e=>dbFor(levelFor(e))),spread=Math.max(...lastTen)-Math.min(...lastTen);ctx.fillStyle='#d4dce7';ctx.textAlign='right';ctx.textBaseline='top';ctx.fillText('Last '+lastTen.length+' attacks: '+spread.toFixed(1)+' dB range',l+pw,t+2);
+  const gridSpacingMs=60000*(Number(settings.beats)||4)/(Number(settings.divisions)||16)/(Number(settings.tempo)||60),closeGaps=attacks.slice(1).map((e,i)=>(e.time-attacks[i].time)*1000).filter(ms=>ms<Math.min(180,gridSpacingMs*.6));
+  if(closeGaps.length>=2){const currentRefractory=Number(settings.refractory),suggested=Math.min(200,Math.max(currentRefractory+10,Math.ceil((Math.max(...closeGaps)+10)/5)*5));if(suggested>currentRefractory)showAdvice('Repeated onsets are unusually close. If they are retriggers rather than intentional fast notes, try Retrigger delay '+suggested+' ms (currently '+currentRefractory+' ms).','warn');else showAdvice('Repeated onsets are unusually close, but Retrigger delay is already at its 200 ms maximum. Check whether the extra events are intentional notes.','warn');}
+  else if(recent.length<5)showAdvice('Need at least 5 detected attacks in the last 10 s for useful detector guidance.');
+  else{
+   const margins=recent.map(e=>e.peakMargin).sort((a,b)=>a-b),medianMargin=margins[Math.floor(margins.length/2)];
+   const sensitivityDominates=recent.filter(e=>(Number.isFinite(e.peakSlow)?e.peakSlow:Number(e.slow)||0)*(Number(e.sensitivity)||1)>=(Number(e.floor)||0)).length>=Math.ceil(recent.length/2);
+   const currentSensitivity=Number(settings.sensitivity),currentFloorDb=Math.round(floorToDbfs(settings.floor)*2)/2;
+   if(medianMargin<3){
+    if(sensitivityDominates){const suggested=Math.max(1.1,Math.round(currentSensitivity*.9*10)/10);if(suggested<currentSensitivity)showAdvice('Low threshold headroom. If notes are missed, try Attack threshold '+suggested.toFixed(1)+'× (currently '+currentSensitivity.toFixed(1)+'×).','warn');else showAdvice('Low threshold headroom, but Attack threshold is already at its minimum of 1.1×. Check input level if notes are missed.','warn');}
+    else{const suggested=Math.max(-100,currentFloorDb-3);if(suggested<currentFloorDb)showAdvice('Low threshold headroom. If notes are missed, try Minimum attack level '+suggested.toFixed(1)+' dBFS (currently '+currentFloorDb.toFixed(1)+' dBFS).','warn');else showAdvice('Low threshold headroom, but Minimum attack level is already at its minimum of -100 dBFS. Check input level if notes are missed.','warn');}
+   }else if(spread>12)showAdvice('Attack levels vary widely. Work on consistent dynamics; only lower thresholds if quiet notes are missed.','warn');
+   else if(medianMargin>12){
+    if(sensitivityDominates){const suggested=Math.min(12,Math.round(currentSensitivity*1.1*10)/10);if(suggested>currentSensitivity)showAdvice('Strong headroom. If false triggers occur, try Attack threshold '+suggested.toFixed(1)+'× (currently '+currentSensitivity.toFixed(1)+'×).','good');else showAdvice('Strong headroom; Attack threshold is already at its maximum of 12×. Change it only if false triggers continue.','good');}
+    else{const suggested=Math.min(-40,currentFloorDb+3);if(suggested>currentFloorDb)showAdvice('Strong headroom. If false triggers occur, try Minimum attack level '+suggested.toFixed(1)+' dBFS (currently '+currentFloorDb.toFixed(1)+' dBFS).','good');else showAdvice('Strong headroom; Minimum attack level is already at its maximum of -40 dBFS. Change it only if false triggers continue.','good');}
+   }else showAdvice('Healthy threshold headroom and fairly even attacks. No adjustment suggested.','good');
+  }
+ }else{ctx.fillStyle='#8c9aad';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('Connect audio and play to see detected attacks',l+pw/2,t+ph/2);showAdvice('No detected attacks in the last 10 s. If you are playing, check the input connection and level first.');}
+ ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillStyle='#65c7ff';ctx.fillRect(l+4,5,8,8);ctx.fillStyle='#aab6c5';ctx.fillText('Attack',l+16,13);ctx.strokeStyle='#ffd75a';ctx.beginPath();ctx.moveTo(l+67,9);ctx.lineTo(l+81,9);ctx.stroke();ctx.fillStyle='#aab6c5';ctx.fillText('Required threshold',l+86,13);
+}
+function drawAll(){drawGrid();drawHistogram();drawTraining();drawAttackChart();}
+function animateGrid(){
+ drawGrid();drawAttackChart();
+ animationFrameId=requestAnimationFrame(animateGrid);
+}
+function nearestGridIndex(beat){const b=Number(settings.beats);let best=null;for(const g of gridTargets()){const d=Math.abs(signedCycleDelta(beat,g.beat,b));if(!best||d<best.d)best={d,index:g.index};}return best;}
+gridCanvas.addEventListener('click',ev=>{if(playing)return;const r=gridCanvas.getBoundingClientRect(),x=ev.clientX-r.left,beat=(x-48)/(r.width-64)*Number(settings.beats);if(beat<0||beat>Number(settings.beats))return;const n=nearestGridIndex(beat);if(n){gridMask[n.index]=!gridMask[n.index];saveSettings();drawAll();}});
+async function refreshDevices(){if(!navigator.mediaDevices?.enumerateDevices)return;try{const old=$('deviceSelect').value;const ds=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='audioinput');$('deviceSelect').innerHTML='<option value="">Default audio input</option>';for(const d of ds){const o=document.createElement('option');o.value=d.deviceId;o.textContent=d.label||`Audio input ${$('deviceSelect').length}`;$('deviceSelect').appendChild(o);}if(old&&[...$('deviceSelect').options].some(o=>o.value===old))$('deviceSelect').value=old;}catch(e){console.warn(e);}}
+const workletCode=`class RhythmDetector extends AudioWorkletProcessor{
+ constructor(){super();this.s={hpf:300,sensitivity:2.0,floor:.00039810717055349735,refractory:120,adaptive:200,monitor:false};this.configure(this.s);this.x1=0;this.x2=0;this.y1=0;this.y2=0;this.fast=0;this.slow=0;this.refract=0;this.armed=true;this.eventExcess=0;this.releaseCount=0;this.inputEnv=0;this.port.onmessage=e=>{if(e.data.type==='settings'){this.configure({...this.s,...e.data.settings});}};}
+ configure(s){this.s=s;const sr=sampleRate,f=Math.max(20,Math.min(4000,s.hpf)),w=2*Math.PI*f/sr,c=Math.cos(w),sn=Math.sin(w),a=1+sn/(2*Math.SQRT1_2);this.b0=((1+c)/2)/a;this.b1=(-(1+c))/a;this.b2=((1+c)/2)/a;this.a1=(-2*c)/a;this.a2=(1-sn/(2*Math.SQRT1_2))/a;this.fastC=1-Math.exp(-1/(.005*sr));this.slowC=1-Math.exp(-1/(Math.max(.05,s.adaptive/1000)*sr));this.inputC=this.fastC;this.refractSamples=Math.floor(s.refractory*sr/1000);this.releaseSamples=Math.floor(.02*sr);}
+ process(inputs,outputs){const input=inputs[0]||[],out=outputs[0]||[],n=(out[0]||input[0]||[]).length;if(!n)return true;for(let i=0;i<n;i++){let x=0,c=0;for(let ch=0;ch<input.length;ch++){if(input[ch]){x+=input[ch][i]||0;c++;}}if(c)x/=c;const ax=Math.abs(x);this.inputEnv+=(ax-this.inputEnv)*this.inputC;const hp=this.b0*x+this.b1*this.x1+this.b2*this.x2-this.a1*this.y1-this.a2*this.y2;this.x2=this.x1;this.x1=x;this.y2=this.y1;this.y1=hp;const r=Math.abs(hp);this.fast+=(r-this.fast)*this.fastC;this.slow+=(r-this.slow)*this.slowC;if(this.refract>0)this.refract--;if(!this.armed){const threshold=Math.max(this.s.floor,this.slow*this.s.sensitivity);if(this.fast>this.eventPeakFast){this.eventPeakFast=this.fast;this.eventPeakSlow=this.slow;this.eventPeakThreshold=threshold;}this.eventPeakMargin=Math.max(this.eventPeakMargin,20*Math.log10(Math.max(this.fast,1e-12)/Math.max(threshold,1e-12)));this.eventExcess=Math.max(this.eventExcess,this.fast-this.slow);const release=this.fast < this.slow+Math.max(this.s.floor,this.eventExcess*.25);this.releaseCount=release?this.releaseCount+1:0;if(this.refract<=0&&this.releaseCount>=this.releaseSamples){this.armed=true;this.port.postMessage({type:'peak',time:this.eventTime,peakFast:this.eventPeakFast,peakSlow:this.eventPeakSlow,peakThreshold:this.eventPeakThreshold,peakMargin:this.eventPeakMargin});this.eventExcess=0;this.releaseCount=0;}}
+const candidate=this.fast>this.slow*this.s.sensitivity&&this.fast>this.s.floor;if(this.armed&&this.refract<=0&&candidate){this.armed=false;this.eventExcess=Math.max(this.s.floor,this.fast-this.slow);this.releaseCount=0;this.refract=this.refractSamples;this.eventTime=(currentFrame+i)/sampleRate;this.eventPeakFast=this.fast;this.eventPeakSlow=this.slow;this.eventPeakThreshold=Math.max(this.s.floor,this.slow*this.s.sensitivity);this.eventPeakMargin=20*Math.log10(Math.max(this.fast,1e-12)/Math.max(this.eventPeakThreshold,1e-12));this.port.postMessage({type:'onset',time:this.eventTime,inputEnv:this.inputEnv,fast:this.fast,slow:this.slow,ratio:this.fast/(this.slow+1e-12),hpf:this.s.hpf,sensitivity:this.s.sensitivity,floor:this.s.floor,refractory:this.s.refractory,adaptive:this.s.adaptive});}
+for(let ch=0;ch<out.length;ch++){const src=input[Math.min(ch,input.length-1)]||input[0];out[ch][i]=this.s.monitor&&src?(src[i]||0):0;}}
+return true;}}
+registerProcessor('rhythm-detector',RhythmDetector);`;
+async function connectAudio(){
+ if(connected){disconnectAudio();return;}
+ if(!navigator.mediaDevices?.getUserMedia||!window.isSecureContext){setStatus('Open via localhost/HTTPS to access audio',false);return;}
+ try{
+  audioContext=new (window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});
+  await audioContext.resume();
+  const url=URL.createObjectURL(new Blob([workletCode],{type:'application/javascript'}));await audioContext.audioWorklet.addModule(url);URL.revokeObjectURL(url);
+  const selected=$('deviceSelect').value;const audio={echoCancellation:false,noiseSuppression:false,autoGainControl:false};if(selected)audio.deviceId={exact:selected};
+  stream=await navigator.mediaDevices.getUserMedia({audio});
+  source=audioContext.createMediaStreamSource(stream);
+  worklet=new AudioWorkletNode(audioContext,'rhythm-detector',{numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[2]});
+  worklet.port.postMessage({type:'settings',settings:workletSettings()});
+  monitorGain=audioContext.createGain();monitorGain.gain.value=settings.monitorOn?1:0;
+  source.connect(worklet);worklet.connect(monitorGain);monitorGain.connect(audioContext.destination);
+  worklet.port.onmessage=e=>{const m=e.data;if(m.type==='onset')handleOnset(m);else if(m.type==='peak'){for(let i=eventHistory.length-1;i>=0;i--)if(eventHistory[i].time===m.time){Object.assign(eventHistory[i],{peakFast:m.peakFast,peakSlow:m.peakSlow,peakThreshold:m.peakThreshold,peakMargin:m.peakMargin});break;}drawAttackChart();}};
+  connected=true;$('connectBtn').textContent='Disconnect audio';$('playBtn').disabled=false;
+  const track=stream.getAudioTracks()[0];$('audioInfo').textContent=`${track?.label||'Audio input'} · ${audioContext.sampleRate} Hz · base latency ${(audioContext.baseLatency*1000).toFixed(1)} ms`;
+  setStatus('Audio connected',true);await refreshDevices();
+ }catch(err){console.error(err);setStatus('Audio error: '+err.message,false);if(audioContext){try{await audioContext.close();}catch(_){}}audioContext=null;}
+}
+function disconnectAudio(){stopTransport();if(stream)stream.getTracks().forEach(t=>t.stop());if(audioContext)audioContext.close();stream=source=worklet=monitorGain=null;audioContext=null;connected=false;$('connectBtn').textContent='Connect audio';$('playBtn').disabled=true;$('stopBtn').disabled=true;setStatus('Audio disconnected');$('audioInfo').textContent='Choose your interface input; use headphones to avoid feedback.';}
+function updateTraining(){if(!playing||!audioContext)return;const now=performance.now();if(now-lastTrainingTime<1000)return;lastTrainingTime=now;const cutoff=audioContext.currentTime-60;const recent=eventHistory.filter(e=>e.result!==null&&e.time>=cutoff);trainingSamples.push({t:now,rate:recent.length?recent.filter(e=>e.result===0).length/recent.length:0});if(trainingSamples.length>600)trainingSamples.shift();drawTraining();}
+for(const id of ['tempo','beats','divisions','swing','phase','error','latency','autoShrink','hpf','sensitivity','floor','refractory','adaptive','clickPitch','clickVolume','metronomeOn','hitClickOn','monitorOn'])$(id).addEventListener('input',e=>{readSettings();if(e.target.id==='error'||(e.target.id==='autoShrink'&&!settings.autoShrink)){effectiveErrorBound=Number(settings.error);lastShrinkOnTime=onTime;}refreshOutputs();saveSettings();applyWorkletSettings();if(monitorGain)monitorGain.gain.value=settings.monitorOn?1:0;drawAll();});
+$('connectBtn').addEventListener('click',connectAudio);$('playBtn').addEventListener('click',startTransport);$('stopBtn').addEventListener('click',stopTransport);$('clearBtn').addEventListener('click',()=>{eventHistory=[];rawOnsets=onTime=early=late=0;trainingSamples=[];updateStats();drawAll();});$('deviceSelect').addEventListener('change',()=>{if(connected){disconnectAudio();connectAudio();}});
+const gridBox=gridCanvas.closest('.canvasbox'),gridFullscreenBtn=$('gridFullscreenBtn');
+if(!gridBox.requestFullscreen)gridFullscreenBtn.hidden=true;
+gridFullscreenBtn.addEventListener('click',async()=>{try{if(document.fullscreenElement===gridBox)await document.exitFullscreen();else await gridBox.requestFullscreen();}catch(err){console.warn('Unable to toggle grid fullscreen:',err);}});
+document.addEventListener('fullscreenchange',()=>{const isFullscreen=document.fullscreenElement===gridBox;gridFullscreenBtn.classList.toggle('is-fullscreen',isFullscreen);gridFullscreenBtn.title=isFullscreen?'Exit fullscreen':'Fullscreen';gridFullscreenBtn.setAttribute('aria-label',isFullscreen?'Exit rhythm grid fullscreen':'Show rhythm grid fullscreen');drawAll();});
+loadSettings();refreshDevices();window.addEventListener('resize',drawAll);setInterval(updateTraining,250);drawAll();
+animationFrameId=requestAnimationFrame(animateGrid);
+})();
+</script>
+</body>
+</html>
